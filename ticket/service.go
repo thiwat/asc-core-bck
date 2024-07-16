@@ -1,7 +1,6 @@
 package ticket
 
 import (
-	"fmt"
 	"errors"
 	"asc-core/types"
 

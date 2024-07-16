@@ -2,7 +2,6 @@ package ticket
 
 import (
 	"context"
-	"fmt"
 	"math"
 	"time"
 
