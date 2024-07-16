@@ -1,11 +1,16 @@
 package user
 
 import (
+	"asc-core/db"
 	"asc-core/line"
+	"asc-core/types"
+	"encoding/json"
 	"time"
 
 	"github.com/google/uuid"
 )
+
+var SESSION_TTL = 30
 
 func Login(input LoginInput) (LoginOutput, error) {
 
@@ -27,10 +32,26 @@ func Login(input LoginInput) (LoginOutput, error) {
 		})
 	}
 
+	session := types.Session{
+		Name:   user.Name,
+		UserId: user.UserId,
+		LineId: user.LineId,
+	}
+
+	token := uuid.NewString()
+	out, _ := json.Marshal(session)
+
+	db.SetKey("TOKEN_"+token, string(out), SESSION_TTL)
+
 	res := LoginOutput{
 		Profile: user,
-		Token:   "TOKEN",
+		Token:   token,
 	}
 
 	return res, nil
+}
+
+func GetProfile(session types.Session) (User, error) {
+	profile, err := FindByUserId(session.UserId)
+	return profile, err
 }

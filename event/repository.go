@@ -3,11 +3,15 @@ package event
 import (
 	"context"
 	"time"
+	"math"
 
 	"asc-core/db"
+	"asc-core/types"
+	"asc-core/utils"
 
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 var eventCollection *mongo.Collection = db.GetCollection(
@@ -45,4 +49,46 @@ func Create(event Event) (Event, error) {
 		return event, err
 	}
 	return FindByCode(event.Code)
+}
+
+func List(page int64, pageSize int64, sort string) (types.ListOutput[Event], error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	var events = make([]Event, 0)
+	var res types.ListOutput[Event]
+
+	sortObj := utils.BuildSort(sort)
+
+	opts := options.Find()
+	opts.SetSkip((page - 1) * pageSize)
+	opts.SetLimit((pageSize))
+	opts.SetSort(sortObj)
+
+	cursor, err := eventCollection.Find(
+		ctx,
+		bson.M{},
+		opts,
+	)
+
+	if err != nil {
+		return res, err
+	}
+
+	if err = cursor.All(ctx, &events); err != nil {
+		return res, err
+	}
+
+	count, err := eventCollection.CountDocuments(ctx, bson.M{})
+	if err != nil {
+		panic(err)
+	}
+
+	res.Rows = events
+	res.Page = page
+	res.PageSize = pageSize
+	res.Total = count
+	res.TotalPage = int64(math.Ceil(float64(count) / float64(pageSize)))
+
+	return res, nil
 }
