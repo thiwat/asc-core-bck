@@ -16,6 +16,23 @@ var userCollection *mongo.Collection = db.GetCollection(
 	},
 )
 
+func FindOne(filter bson.M) (User, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+	var user User
+
+	err := userCollection.FindOne(
+		ctx,
+		filter,
+	).Decode(&user)
+
+	if err != nil {
+		return user, err
+	}
+
+	return user, nil
+}
+
 func FindByUserId(userId string) (User, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()

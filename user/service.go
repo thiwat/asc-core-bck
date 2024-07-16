@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"go.mongodb.org/mongo-driver/bson"
 )
 
 var SESSION_TTL = 30
@@ -20,7 +21,7 @@ func Login(input LoginInput) (LoginOutput, error) {
 		return LoginOutput{}, err
 	}
 
-	user, err := FindByUserId(lineProfile.Sub)
+	user, err := FindOne(bson.M{"line_id": lineProfile.Sub})
 
 	if err != nil {
 		user, _ = Create(User{

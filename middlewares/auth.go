@@ -4,7 +4,6 @@ import (
 	"asc-core/db"
 	"asc-core/types"
 	"encoding/json"
-	"fmt"
 	"net/http"
 	"strings"
 
@@ -32,8 +31,6 @@ func ValidateToken() fiber.Handler {
 		sessionData, _ := db.GetKey("TOKEN_" + token)
 
 		err := json.Unmarshal([]byte(sessionData), &session)
-
-		fmt.Println(session)
 
 		if err != nil {
 			return c.Status(http.StatusBadRequest).JSON(types.ErrorResponse{
