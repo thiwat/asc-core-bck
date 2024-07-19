@@ -50,28 +50,4 @@ func RestRouteV1(router fiber.Router) {
 
 		return c.Status(http.StatusOK).JSON(res)
 	})
-
-	ticketGroup.Post("/", func(c *fiber.Ctx) error {
-
-		session := c.Locals("session").(types.Session)
-
-		var input PurchaseTicketInput
-		if err := c.BodyParser(&input); err != nil {
-			return c.Status(http.StatusBadRequest).JSON(types.ErrorResponse{
-				Code:    "invalid_request",
-				Message: err.Error(),
-			})
-		}
-
-		res, err := PurchaseTicket(input, session)
-
-		if err != nil {
-			return c.Status(http.StatusBadRequest).JSON(types.ErrorResponse{
-				Code:    "invalid_request",
-				Message: err.Error(),
-			})
-		}
-
-		return c.Status(http.StatusOK).JSON(res)
-	})
 }

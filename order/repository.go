@@ -1,4 +1,4 @@
-package event
+package order
 
 import (
 	"context"
@@ -8,70 +8,74 @@ import (
 	"asc-core/db"
 	"asc-core/utils"
 
+	"github.com/google/uuid"
+
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
-var eventCollection *mongo.Collection = db.GetCollection(
-	"event",
+var orderCollection *mongo.Collection = db.GetCollection(
+	"orderCollection",
 	bson.D{
-		{Key: "code", Value: 1},
+		{Key: "order_no", Value: 1},
 	},
 )
 
-func FindByCode(code string) (Event, error) {
+func FindOne(filter bson.M) (Order, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
-	var event Event
+	var order Order
 
-	err := eventCollection.FindOne(
+	err := orderCollection.FindOne(
 		ctx,
-		bson.M{"code": code},
-	).Decode(&event)
+		filter,
+	).Decode(&order)
 
 	if err != nil {
-		return event, err
+		return order, err
 	}
 
-	return event, nil
+	return order, nil
 }
 
-func Create(event Event) (Event, error) {
+func Create(order Order) (Order, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
-	event.CreatedAt = time.Now()
-	event.UpdatedAt = time.Now()
-	_, err := eventCollection.InsertOne(ctx, event)
+	order.OrderNo = uuid.NewString()
+
+	order.CreatedAt = time.Now()
+	order.UpdatedAt = time.Now()
+	_, err := orderCollection.InsertOne(ctx, order)
 	if err != nil {
-		return event, err
+		return order, err
 	}
-	return FindByCode(event.Code)
+	return FindOne(bson.M{"order_no": order.OrderNo})
 }
 
-func UpdateByCode(code string, event bson.M) (Event, error) {
+func UpdateOne(filter bson.M, order bson.M) (Order, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
-	event["updated_at"] = time.Now()
-	_, err := eventCollection.UpdateOne(
+	order["updated_at"] = time.Now()
+	_, err := orderCollection.UpdateOne(
 		ctx,
-		bson.M{"code": code},
-		bson.M{"$set": event},
+		filter,
+		bson.M{"$set": order},
 	)
 
 	if err != nil {
-		return Event{}, err
+		return Order{}, err
 	}
-	return FindByCode(code)
+	return FindOne(filter)
 }
 
-func List(page int64, pageSize int64, sort string) (ListOutput, error) {
+func List(filter bson.M, page int64, pageSize int64, sort string) (ListOutput, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
-	var events = make([]Event, 0)
+	var events = make([]Order, 0)
 	var res ListOutput
 
 	sortObj := utils.BuildSort(sort)
@@ -81,9 +85,9 @@ func List(page int64, pageSize int64, sort string) (ListOutput, error) {
 	opts.SetLimit((pageSize))
 	opts.SetSort(sortObj)
 
-	cursor, err := eventCollection.Find(
+	cursor, err := orderCollection.Find(
 		ctx,
-		bson.M{},
+		filter,
 		opts,
 	)
 
@@ -95,7 +99,7 @@ func List(page int64, pageSize int64, sort string) (ListOutput, error) {
 		return res, err
 	}
 
-	count, err := eventCollection.CountDocuments(ctx, bson.M{})
+	count, err := orderCollection.CountDocuments(ctx, filter)
 	if err != nil {
 		panic(err)
 	}

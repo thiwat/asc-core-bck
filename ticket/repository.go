@@ -6,7 +6,6 @@ import (
 	"time"
 
 	"asc-core/db"
-	"asc-core/types"
 	"asc-core/utils"
 
 	"github.com/google/uuid"
@@ -19,8 +18,7 @@ import (
 var ticketCollection *mongo.Collection = db.GetCollection(
 	"ticket",
 	bson.D{
-		{Key: "user_id", Value: 1},
-		{Key: "event", Value: 1},
+		{Key: "code", Value: 1},
 	},
 )
 
@@ -56,12 +54,29 @@ func Create(ticket Ticket) (Ticket, error) {
 	return FindOne(bson.M{"code": ticket.Code})
 }
 
-func List(filter bson.M, page int64, pageSize int64, sort string) (types.ListOutput[Ticket], error) {
+func UpdateOne(filter bson.M, ticket bson.M) (Ticket, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	ticket["updated_at"] = time.Now()
+	_, err := ticketCollection.UpdateOne(
+		ctx,
+		filter,
+		bson.M{"$set": ticket},
+	)
+
+	if err != nil {
+		return Ticket{}, err
+	}
+	return FindOne(filter)
+}
+
+func List(filter bson.M, page int64, pageSize int64, sort string) (ListOutput, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
 	var events = make([]Ticket, 0)
-	var res types.ListOutput[Ticket]
+	var res ListOutput
 
 	sortObj := utils.BuildSort(sort)
 
