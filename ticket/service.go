@@ -14,3 +14,11 @@ func ListTicketByUser(page int64, pageSize int64, sort string, session types.Ses
 	filter := bson.M{"user_id": session.UserId}
 	return list(filter, page, pageSize, sort)
 }
+
+func IssueTicket(data IssueTicketInput) (Ticket, error) {
+	return create(Ticket{
+		UserId: data.UserId,
+		Event:  data.Event,
+		Status: string(NotUsed),
+	})
+}

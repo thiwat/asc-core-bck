@@ -1,6 +1,7 @@
 package order
 
 import (
+	"asc-core/ticket"
 	"asc-core/types"
 	"errors"
 
@@ -72,8 +73,19 @@ func ApprovePayment(input ApprovePaymentInput) (Order, error) {
 		return order, err
 	}
 
-	return updateOne(
+	res, err := updateOne(
 		bson.M{"order_no": input.OrderNo},
 		Order{Status: string(Completed)},
 	)
+
+	if err == nil {
+		for i := int32(0); i < order.Quantity; i++ {
+			ticket.IssueTicket(ticket.IssueTicketInput{
+				UserId: order.UserId,
+				Event:  order.Event,
+			})
+		}
+	}
+
+	return res, err
 }

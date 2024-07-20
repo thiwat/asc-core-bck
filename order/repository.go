@@ -16,7 +16,7 @@ import (
 )
 
 var orderCollection *mongo.Collection = db.GetCollection(
-	"orderCollection",
+	"order",
 	bson.D{
 		{Key: "order_no", Value: 1},
 	},

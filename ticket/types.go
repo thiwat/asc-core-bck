@@ -7,3 +7,8 @@ type ListOutput struct {
 	Total     int64    `json:"total"`
 	TotalPage int64    `json:"total_page"`
 }
+
+type IssueTicketInput struct {
+	Event  string `json:"event"`
+	UserId string `json:"user_id"`
+}
