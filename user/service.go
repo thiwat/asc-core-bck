@@ -21,7 +21,7 @@ func Login(input LoginInput) (LoginOutput, error) {
 		return LoginOutput{}, err
 	}
 
-	user, err := FindOne(bson.M{"line_id": lineProfile.Sub})
+	user, err := findOne(bson.M{"line_id": lineProfile.Sub})
 
 	if err != nil {
 		user, _ = Create(User{
@@ -53,6 +53,6 @@ func Login(input LoginInput) (LoginOutput, error) {
 }
 
 func GetProfile(session types.Session) (User, error) {
-	profile, err := FindByUserId(session.UserId)
+	profile, err := findOne(bson.M{"user_id": session.UserId})
 	return profile, err
 }

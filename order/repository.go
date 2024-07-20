@@ -22,7 +22,7 @@ var orderCollection *mongo.Collection = db.GetCollection(
 	},
 )
 
-func FindOne(filter bson.M) (Order, error) {
+func findOne(filter bson.M) (Order, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 	var order Order
@@ -39,7 +39,7 @@ func FindOne(filter bson.M) (Order, error) {
 	return order, nil
 }
 
-func Create(order Order) (Order, error) {
+func create(order Order) (Order, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
@@ -51,14 +51,14 @@ func Create(order Order) (Order, error) {
 	if err != nil {
 		return order, err
 	}
-	return FindOne(bson.M{"order_no": order.OrderNo})
+	return findOne(bson.M{"order_no": order.OrderNo})
 }
 
-func UpdateOne(filter bson.M, order bson.M) (Order, error) {
+func updateOne(filter bson.M, order Order) (Order, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
-	order["updated_at"] = time.Now()
+	order.UpdatedAt = time.Now()
 	_, err := orderCollection.UpdateOne(
 		ctx,
 		filter,
@@ -68,10 +68,10 @@ func UpdateOne(filter bson.M, order bson.M) (Order, error) {
 	if err != nil {
 		return Order{}, err
 	}
-	return FindOne(filter)
+	return findOne(filter)
 }
 
-func List(filter bson.M, page int64, pageSize int64, sort string) (ListOutput, error) {
+func list(filter bson.M, page int64, pageSize int64, sort string) (ListOutput, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 

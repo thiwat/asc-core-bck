@@ -22,7 +22,7 @@ var ticketCollection *mongo.Collection = db.GetCollection(
 	},
 )
 
-func FindOne(filter bson.M) (Ticket, error) {
+func findOne(filter bson.M) (Ticket, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 	var ticket Ticket
@@ -39,7 +39,7 @@ func FindOne(filter bson.M) (Ticket, error) {
 	return ticket, nil
 }
 
-func Create(ticket Ticket) (Ticket, error) {
+func create(ticket Ticket) (Ticket, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
@@ -51,14 +51,14 @@ func Create(ticket Ticket) (Ticket, error) {
 	if err != nil {
 		return ticket, err
 	}
-	return FindOne(bson.M{"code": ticket.Code})
+	return findOne(bson.M{"code": ticket.Code})
 }
 
-func UpdateOne(filter bson.M, ticket bson.M) (Ticket, error) {
+func updateOne(filter bson.M, ticket Ticket) (Ticket, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
-	ticket["updated_at"] = time.Now()
+	ticket.UpdatedAt = time.Now()
 	_, err := ticketCollection.UpdateOne(
 		ctx,
 		filter,
@@ -68,10 +68,10 @@ func UpdateOne(filter bson.M, ticket bson.M) (Ticket, error) {
 	if err != nil {
 		return Ticket{}, err
 	}
-	return FindOne(filter)
+	return findOne(filter)
 }
 
-func List(filter bson.M, page int64, pageSize int64, sort string) (ListOutput, error) {
+func list(filter bson.M, page int64, pageSize int64, sort string) (ListOutput, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 

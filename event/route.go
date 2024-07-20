@@ -39,7 +39,7 @@ func RestRouteV1(router fiber.Router) {
 			})
 		}
 
-		res, err := FindByCode(code)
+		res, err := GetEvent(code)
 
 		if err != nil {
 			return c.Status(http.StatusBadRequest).JSON(types.ErrorResponse{
@@ -62,6 +62,30 @@ func RestRouteV1(router fiber.Router) {
 		}
 
 		res, err := CreateEvent(event)
+
+		if err != nil {
+			return c.Status(http.StatusBadRequest).JSON(types.ErrorResponse{
+				Code:    "invalid_request",
+				Message: err.Error(),
+			})
+		}
+
+		return c.Status(http.StatusOK).JSON(res)
+	})
+
+	eventGroup.Put("/:code", func(c *fiber.Ctx) error {
+
+		code := c.Params("code")
+
+		var event Event
+		if err := c.BodyParser(&event); err != nil {
+			return c.Status(http.StatusBadRequest).JSON(types.ErrorResponse{
+				Code:    "invalid_request",
+				Message: err.Error(),
+			})
+		}
+
+		res, err := UpdateByCode(code, event)
 
 		if err != nil {
 			return c.Status(http.StatusBadRequest).JSON(types.ErrorResponse{

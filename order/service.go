@@ -10,16 +10,16 @@ import (
 )
 
 func GetOrder(orderNo string, session types.Session) (Order, error) {
-	return FindOne(bson.M{"order_no": orderNo, "user_id": session.UserId})
+	return findOne(bson.M{"order_no": orderNo, "user_id": session.UserId})
 }
 
 func ListByUser(page int64, pageSize int64, sort string, session types.Session) (ListOutput, error) {
-	return List(bson.M{"user_id": session.UserId}, page, pageSize, sort)
+	return list(bson.M{"user_id": session.UserId}, page, pageSize, sort)
 }
 
 func PlaceOrder(input PlaceOrderInput, session types.Session) (Order, error) {
 
-	eventRec, err := event.FindByCode(input.Event)
+	eventRec, err := event.GetEvent(input.Event)
 
 	if err != nil {
 		return Order{}, err
@@ -36,10 +36,10 @@ func PlaceOrder(input PlaceOrderInput, session types.Session) (Order, error) {
 		Quantity: input.Quantity,
 	}
 
-	res, err := Create(order)
+	res, err := create(order)
 
 	if err == nil {
-		event.UpdateByCode(input.Event, bson.M{"available_seat": eventRec.AvailableSeat - input.Quantity})
+		event.UpdateByCode(input.Event, event.Event{AvailableSeat: eventRec.AvailableSeat - input.Quantity})
 	}
 
 	return res, err
@@ -47,7 +47,7 @@ func PlaceOrder(input PlaceOrderInput, session types.Session) (Order, error) {
 
 func UploadSlip(input UploadSlipInput, session types.Session) (Order, error) {
 
-	order, err := FindOne(bson.M{
+	order, err := findOne(bson.M{
 		"order_no": input.OrderNo,
 		"user_id":  session.UserId,
 	})
@@ -56,15 +56,15 @@ func UploadSlip(input UploadSlipInput, session types.Session) (Order, error) {
 		return order, err
 	}
 
-	return UpdateOne(
+	return updateOne(
 		bson.M{"order_no": input.OrderNo, "user_id": session.UserId},
-		bson.M{"slip_url": input.SlipUrl, "status": string(Paid)},
+		Order{SlipUrl: input.SlipUrl, Status: string(Paid)},
 	)
 }
 
 func ApprovePayment(input ApprovePaymentInput) (Order, error) {
 
-	order, err := FindOne(bson.M{
+	order, err := findOne(bson.M{
 		"order_no": input.OrderNo,
 	})
 
@@ -72,8 +72,8 @@ func ApprovePayment(input ApprovePaymentInput) (Order, error) {
 		return order, err
 	}
 
-	return UpdateOne(
+	return updateOne(
 		bson.M{"order_no": input.OrderNo},
-		bson.M{"status": string(Completed)},
+		Order{Status: string(Completed)},
 	)
 }

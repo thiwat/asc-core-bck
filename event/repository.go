@@ -20,14 +20,14 @@ var eventCollection *mongo.Collection = db.GetCollection(
 	},
 )
 
-func FindByCode(code string) (Event, error) {
+func findOne(filter bson.M) (Event, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 	var event Event
 
 	err := eventCollection.FindOne(
 		ctx,
-		bson.M{"code": code},
+		filter,
 	).Decode(&event)
 
 	if err != nil {
@@ -37,7 +37,7 @@ func FindByCode(code string) (Event, error) {
 	return event, nil
 }
 
-func Create(event Event) (Event, error) {
+func create(event Event) (Event, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
@@ -47,27 +47,27 @@ func Create(event Event) (Event, error) {
 	if err != nil {
 		return event, err
 	}
-	return FindByCode(event.Code)
+	return findOne(bson.M{"code": event.Code})
 }
 
-func UpdateByCode(code string, event bson.M) (Event, error) {
+func updateOne(filter bson.M, event Event) (Event, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
-	event["updated_at"] = time.Now()
+	event.UpdatedAt = time.Now()
 	_, err := eventCollection.UpdateOne(
 		ctx,
-		bson.M{"code": code},
+		filter,
 		bson.M{"$set": event},
 	)
 
 	if err != nil {
 		return Event{}, err
 	}
-	return FindByCode(code)
+	return findOne(filter)
 }
 
-func List(page int64, pageSize int64, sort string) (ListOutput, error) {
+func list(page int64, pageSize int64, sort string) (ListOutput, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 

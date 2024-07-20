@@ -16,7 +16,7 @@ var userCollection *mongo.Collection = db.GetCollection(
 	},
 )
 
-func FindOne(filter bson.M) (User, error) {
+func findOne(filter bson.M) (User, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 	var user User
@@ -24,23 +24,6 @@ func FindOne(filter bson.M) (User, error) {
 	err := userCollection.FindOne(
 		ctx,
 		filter,
-	).Decode(&user)
-
-	if err != nil {
-		return user, err
-	}
-
-	return user, nil
-}
-
-func FindByUserId(userId string) (User, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
-	var user User
-
-	err := userCollection.FindOne(
-		ctx,
-		bson.M{"user_id": userId},
 	).Decode(&user)
 
 	if err != nil {
@@ -60,10 +43,10 @@ func Create(user User) (User, error) {
 	if err != nil {
 		return user, err
 	}
-	return FindByUserId(user.UserId)
+	return findOne(bson.M{"user_id": user.UserId})
 }
 
-func UpdateByUserId(userId string, user User) (User, error) {
+func UpdateOne(filter bson.M, user User) (User, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
@@ -71,12 +54,12 @@ func UpdateByUserId(userId string, user User) (User, error) {
 
 	_, err := userCollection.UpdateOne(
 		ctx,
-		bson.M{"user_id": userId},
+		filter,
 		bson.M{"$set": user},
 	)
 
 	if err != nil {
 		return user, err
 	}
-	return FindByUserId((userId))
+	return findOne((filter))
 }
