@@ -9,6 +9,9 @@ func GetEvent(code string) (Event, error) {
 }
 
 func CreateEvent(event Event) (Event, error) {
+
+	event.AvailableSeat = event.NumberOfSeat
+
 	return create(event)
 }
 
